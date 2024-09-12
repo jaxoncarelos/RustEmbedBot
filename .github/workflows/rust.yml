@@ -29,8 +29,8 @@ jobs:
       run: |
         cargo build --release --target x86_64-unknown-linux-gnu
         cd target/x86_64-unknown-linux-gnu
-        zip -r RustEmbedBotLinux.zip RustEmbedBot
-        gh release upload ${{github.event.release.tag_name}} RustEmbedBotLinux.zip
+        ls
+        gh release upload ${{github.event.release.tag_name}} RustEmbedBot
       env:
         GITHUB_TOKEN: ${{github.TOKEN}}
       shell: bash
