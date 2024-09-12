@@ -1,6 +1,6 @@
-use std::process::Command;
+use std::{fs::File, process::Command};
 
-use serenity::{all::{Context, EventHandler, Message}, async_trait};
+use serenity::{all::{Context, CreateAttachment, CreateMessage, EventHandler, Message}, async_trait};
 use uuid::Uuid;
 
 use crate::content_utils;
@@ -17,37 +17,42 @@ impl EventHandler for Handler {
             return;
         }
 
-        let content = msg.content;
+        let content = &msg.content;
 
         if content.starts_with("!!") {
             println!("Skipping embed on {}", content);
             return;
         }
 
-        let should_be_spoiled = content_utils::should_be_spoilered(&content);
-        let is_valid = content_utils::is_valid(&content);
+        let should_be_spoiled = content_utils::should_be_spoilered(content);
+        let is_valid = content_utils::is_valid(content);
         
         println!("Message Created");
         println!("Author: {}", msg.author.name);
         println!("Content: {}", content);
         let check_url = regex::Regex::new(&content_utils::get_regex(&is_valid)).unwrap();
-        let content = check_url.find(&content).unwrap().as_str();
+        let content = check_url.find(content).unwrap().as_str();
         match is_valid {
             content_utils::Content::Twitter => {
-                let cmd = Command::new("yt-dlp")
+                let mut cmd = Command::new("yt-dlp");
+                let command = cmd
                     .arg("-g")
                     .arg("-f")
                     .arg("best[ext=mp4]")
                     .arg(content);
-                let output = cmd.output().expect("Failed to execute command");
-                msg.reply(ctx, format!("[Twitter Video]({})", String::from_utf8(output.stdout).unwrap())).await;
+                let output = command.output().expect("Failed to execute command");
+                if let Err(why) = &msg.reply(ctx, format!("[Twitter Video]({})", String::from_utf8(output.stdout).unwrap())).await {
+                    println!("Error sending message: {:?}", why);
+                };
             },
             _ => {
-               (output, outPath) = content_utils::download(content, should_be_spoiled);
-            }
+                // the file is stored @ outPath
+               let (output, outPath) = content_utils::download(content, should_be_spoiled);
+                
+                let files = CreateAttachment::path(&outPath).await.unwrap();
+                let message = CreateMessage::new().reference_message(&msg).files(vec![files]);
+                let _ = msg.channel_id.send_message(&ctx.http, message).await;
+           }
         }
    }
-}
-pub fn download(content: &str, should_be_spoiled: bool) -> (String, String) {
-    let file_name = Uuid::new_v4().to_string();
 }
