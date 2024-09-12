@@ -5,7 +5,12 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  release:
+    types: [published]
 
+# Make sure the GITHUB_TOKEN has permission to upload to our releases
+permissions:
+  contents: write
 env:
   CARGO_TERM_COLOR: always
 
@@ -21,4 +26,10 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
     - name: Build linux
-      run: cargo build --target x86_64-unknown-linux-gnu
+      run: |
+        cargo build --release --target x86_64-unknown-linux-gnu
+        zip -r RustEmbedBotLinux.zip RustEmbedBot
+        gh release upload ${{github.event.release.tag_name}} RustEmbedBotLinux.zip
+      env:
+        GITHUB_TOKEN: ${{github.TOKEN}}
+      shell: bash
