@@ -55,7 +55,7 @@ pub fn get_regex(content: &Content) -> String {
     let winner = regex_map.iter().find(|(key, _)| key == &content);
     match winner {
         Some((_, value)) => value.to_string(),
-        None => panic!("No valid content found"),
+        None => "".to_string(),
     }
 }
 pub fn is_valid(content: &str) -> Content {

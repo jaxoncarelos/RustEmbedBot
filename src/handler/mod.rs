@@ -1,10 +1,9 @@
 use std::{fs::File, process::Command};
 
 use serenity::{
-    all::{Context, CreateAttachment, CreateMessage, EventHandler, Message},
+    all::{Context, CreateAllowedMentions, CreateAttachment, CreateMessage, EventHandler, Message},
     async_trait,
 };
-use uuid::Uuid;
 
 use crate::content_utils;
 
@@ -61,9 +60,11 @@ impl EventHandler for Handler {
                 println!("Output: {}", output);
                 println!("OutPath: {}", outPath);
                 let files = CreateAttachment::path(&outPath).await.unwrap();
+                let allowed_mentions = CreateAllowedMentions::default().replied_user(false);
                 let message = CreateMessage::new()
                     .reference_message(&msg)
-                    .files(vec![files]);
+                    .files(vec![files])
+                    .allowed_mentions(allowed_mentions);
                 let _ = msg.channel_id.send_message(&ctx.http, message).await;
             }
         }

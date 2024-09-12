@@ -8,8 +8,8 @@ mod handler;
 
 #[tokio::main]
 async fn main() {
-    dotenv().ok();
-    let token = env::var("DISCORD_TOKEN").expect("Expected token");
+    let _ = dotenv();
+    let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
 
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::GUILD_MESSAGE_REACTIONS
