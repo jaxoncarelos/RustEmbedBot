@@ -26,7 +26,7 @@ impl EventHandler for Handler {
         let should_be_spoiled = content_utils::should_be_spoilered(content);
         let is_valid = content_utils::is_valid(content);
 
-        let check_url = regex::Regex::new(&content_utils::get_regex(&is_valid)).unwrap();
+        let check_url = regex::Regex::new(&content_utils::get_regex(content.to_string())).unwrap();
         let content = check_url.find(content).unwrap().as_str();
         if is_valid == content_utils::Content::None {
             return;
@@ -57,12 +57,19 @@ impl EventHandler for Handler {
                 };
             }
             _ => {
-                // the file is stored @ outPath
-                let (output, outPath) = content_utils::download(content, should_be_spoiled).await;
-
+                // the file is stored @ out_path
+                let (output, out_path) = content_utils::download(content, should_be_spoiled).await;
+                if out_path == "stderr" {
+                    println!("Failed downloading content: {}", output);
+                    msg.channel_id
+                        .create_reaction(&ctx, msg, '❌')
+                        .await
+                        .unwrap();
+                    return;
+                }
                 println!("Output: {}", output);
-                println!("OutPath: {}", outPath);
-                let files = CreateAttachment::path(&outPath).await.unwrap();
+                println!("OutPath: {}", out_path);
+                let files = CreateAttachment::path(&out_path).await.unwrap();
                 let allowed_mentions = CreateAllowedMentions::default().replied_user(false);
                 let message = CreateMessage::new()
                     .reference_message(&msg)
@@ -70,7 +77,7 @@ impl EventHandler for Handler {
                     .allowed_mentions(allowed_mentions);
                 let _ = msg.channel_id.send_message(&ctx.http, message).await;
 
-                if let Err(why) = std::fs::remove_file(&outPath) {
+                if let Err(why) = std::fs::remove_file(&out_path) {
                     println!("Error deleting file: {:?}", why);
                 }
             }

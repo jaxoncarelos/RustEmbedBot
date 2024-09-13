@@ -1,96 +1,55 @@
-use std::{collections::HashMap, hash::Hasher, process::Command};
+use std::process::Command;
 
+use regex::RegexSet;
 use uuid::Uuid;
+
+#[derive(PartialEq, Hash, Eq, Debug, Clone)]
+pub enum Content {
+    Twitter,
+    Some,
+    None,
+}
 pub fn should_be_spoilered(content: &str) -> bool {
     let pattern = r"^([|]{2}).*([|]{2})$";
     let re = regex::Regex::new(pattern).unwrap();
     re.is_match(content)
 }
-#[derive(PartialEq, Hash, Eq, Debug)]
-pub enum Content {
-    Twitter,
-    Tiktok,
-    Reddit,
-    Instagram,
-    Facebook,
-    None,
-}
+static TWITTER_REGEX: &str =
+    r"https:\/\/(?:www\.)?(twitter|x)\.com\/.+\/status(?:es)?\/(\d+)(?:.+ )?";
+static REGEX_MAP: [&str; 4] = [
+    r"https?://(?:www\.|vm\.|vt\.)?tiktok\.com/.+(?: )?",
+    r"https?://(?:(?:old\.|www\.)?reddit\.com|v\.redd\.it)/.+(?: )?",
+    r"https?:\/\/(?:www\.)?instagram\.com\/[a-zA-Z0-9_]+\/?(?:\?igshid=[a-zA-Z0-9_]+)?",
+    r"https?:\/\/(?:www\.)?facebook\.com\/(reel)\/[a-zA-Z0-9_]+\/?",
+];
 
-impl Clone for Content {
-    fn clone(&self) -> Content {
-        match self {
-            Content::Twitter => Content::Twitter,
-            Content::Tiktok => Content::Tiktok,
-            Content::Reddit => Content::Reddit,
-            Content::Instagram => Content::Instagram,
-            Content::Facebook => Content::Facebook,
-            Content::None => Content::None,
-        }
+pub fn get_regex(content: String) -> String {
+    if regex::Regex::new(TWITTER_REGEX).unwrap().is_match(&content) {
+        return TWITTER_REGEX.to_string();
     }
-}
-pub fn get_regex(content: &Content) -> String {
-    let regex_map: HashMap<Content, String> = HashMap::from([
-        (
-            Content::Twitter,
-            r"https:\/\/(?:www\.)?(twitter|x)\.com\/.+\/status(?:es)?\/(\d+)(?:.+ )?".to_string(),
-        ),
-        (
-            Content::Tiktok,
-            r"https?://(?:www\.|vm\.|vt\.)?tiktok\.com/.+(?: )?".to_string(),
-        ),
-        (
-            Content::Reddit,
-            r"https?://(?:(?:old\.|www\.)?reddit\.com|v\.redd\.it)/.+(?: )?".to_string(),
-        ),
-        (
-            Content::Instagram,
-            r"https?:\/\/(?:www\.)?instagram\.com\/[a-zA-Z0-9_]+\/?(?:\?igshid=[a-zA-Z0-9_]+)?"
-                .to_string(),
-        ),
-        (
-            Content::Facebook,
-            r"https?:\/\/(?:www\.)?facebook\.com\/(reel)\/[a-zA-Z0-9_]+\/?".to_string(),
-        ),
-    ]);
-    let winner = regex_map.iter().find(|(key, _)| key == &content);
-    match winner {
-        Some((_, value)) => value.to_string(),
-        None => "".to_string(),
-    }
+    let set = RegexSet::new(REGEX_MAP).unwrap();
+    let matches = set.matches(&content);
+
+    return REGEX_MAP[matches.iter().next().unwrap()].to_string();
 }
 pub fn is_valid(content: &str) -> Content {
-    let regex_map: HashMap<Content, String> = HashMap::from([
-        (
-            Content::Twitter,
-            r"https:\/\/(?:www\.)?(twitter|x)\.com\/.+\/status(?:es)?\/(\d+)(?:.+ )?".to_string(),
-        ),
-        (
-            Content::Tiktok,
-            r"https?://(?:www\.|vm\.|vt\.)?tiktok\.com/.+(?: )?".to_string(),
-        ),
-        (
-            Content::Reddit,
-            r"https?://(?:(?:old\.|www\.)?reddit\.com|v\.redd\.it)/.+(?: )?".to_string(),
-        ),
-        (
-            Content::Instagram,
-            r"https?:\/\/(?:www\.)?instagram\.com\/[a-zA-Z0-9_]+\/?(?:\?igshid=[a-zA-Z0-9_]+)?"
-                .to_string(),
-        ),
-        (
-            Content::Facebook,
-            r"https?:\/\/(?:www\.)?facebook\.com\/(reel)\/[a-zA-Z0-9_]+\/?".to_string(),
-        ),
-    ]);
-    let winner = regex_map.iter().find(|(_, value)| {
-        let re = regex::Regex::new(value).unwrap();
-        re.is_match(content)
-    });
-    match winner {
-        Some((key, _)) => key.clone(),
-        None => Content::None,
+    if regex::Regex::new(TWITTER_REGEX).unwrap().is_match(content) {
+        return Content::Twitter;
     }
+
+    let set = RegexSet::new(REGEX_MAP).unwrap();
+    let content = content.trim();
+    let matches = set.matches(content);
+    if matches.iter().count() > 0 {
+        return Content::Some;
+    }
+    Content::None
 }
+// Downloads the content from the URL using predefined yt-dlp command.
+// Returns the output and the file name.
+// The file name is a UUID v4 string with the .mp4 extension.
+// If the content should be spoilered, the file name is prefixed with "SPOILER_".
+// The file is stored in the current working directory.
 pub async fn download(content: &str, should_be_spoiled: bool) -> (String, String) {
     let mut file_name = Uuid::new_v4().to_string() + ".mp4";
     if should_be_spoiled {
@@ -112,5 +71,11 @@ pub async fn download(content: &str, should_be_spoiled: bool) -> (String, String
         .arg(&file_name)
         .arg(content);
     let output = command.output().expect("Failed to execute command");
+    if !output.stderr.is_empty() {
+        return (
+            String::from_utf8(output.stderr).unwrap(),
+            "stderr".to_string(),
+        );
+    }
     (String::from_utf8(output.stdout).unwrap(), file_name)
 }
