@@ -59,7 +59,14 @@ impl EventHandler for Handler {
             _ => {
                 // the file is stored @ out_path
                 let (output, out_path) = content_utils::download(content, should_be_spoiled).await;
-
+                if out_path == "stderr" {
+                    println!("Failed downloading content: {}", output);
+                    msg.channel_id
+                        .create_reaction(&ctx, msg, '❌')
+                        .await
+                        .unwrap();
+                    return;
+                }
                 println!("Output: {}", output);
                 println!("OutPath: {}", out_path);
                 let files = CreateAttachment::path(&out_path).await.unwrap();

@@ -61,5 +61,11 @@ pub async fn download(content: &str, should_be_spoiled: bool) -> (String, String
         .arg(&file_name)
         .arg(content);
     let output = command.output().expect("Failed to execute command");
+    if output.stderr.len() > 0 {
+        return (
+            String::from_utf8(output.stderr).unwrap(),
+            "stderr".to_string(),
+        );
+    }
     (String::from_utf8(output.stdout).unwrap(), file_name)
 }
