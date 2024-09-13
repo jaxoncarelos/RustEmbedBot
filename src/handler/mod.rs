@@ -1,4 +1,4 @@
-use std::{fs::File, process::Command};
+use std::process::Command;
 
 use serenity::{
     all::{Context, CreateAllowedMentions, CreateAttachment, CreateMessage, EventHandler, Message},
@@ -40,6 +40,9 @@ impl EventHandler for Handler {
                 let mut cmd = Command::new("yt-dlp");
                 let command = cmd.arg("-g").arg("-f").arg("best[ext=mp4]").arg(content);
                 let output = command.output().expect("Failed to execute command");
+                if output.stdout.is_empty() {
+                    return;
+                }
                 if let Err(why) = &msg
                     .reply(
                         ctx,
@@ -66,6 +69,10 @@ impl EventHandler for Handler {
                     .files(vec![files])
                     .allowed_mentions(allowed_mentions);
                 let _ = msg.channel_id.send_message(&ctx.http, message).await;
+
+                if let Err(why) = std::fs::remove_file(&outPath) {
+                    println!("Error deleting file: {:?}", why);
+                }
             }
         }
     }
