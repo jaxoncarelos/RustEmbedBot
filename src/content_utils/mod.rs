@@ -1,11 +1,7 @@
-use std::{collections::HashMap, hash::Hasher, process::Command};
+use std::{collections::HashMap, process::Command};
 
 use uuid::Uuid;
-pub fn should_be_spoilered(content: &str) -> bool {
-    let pattern = r"^([|]{2}).*([|]{2})$";
-    let re = regex::Regex::new(pattern).unwrap();
-    re.is_match(content)
-}
+
 #[derive(PartialEq, Hash, Eq, Debug, Clone)]
 pub enum Content {
     Twitter,
@@ -14,6 +10,11 @@ pub enum Content {
     Instagram,
     Facebook,
     None,
+}
+pub fn should_be_spoilered(content: &str) -> bool {
+    let pattern = r"^([|]{2}).*([|]{2})$";
+    let re = regex::Regex::new(pattern).unwrap();
+    re.is_match(content)
 }
 
 pub fn get_regex(content: &Content) -> String {
@@ -79,6 +80,11 @@ pub fn is_valid(content: &str) -> Content {
         None => Content::None,
     }
 }
+// Downloads the content from the URL using predefined yt-dlp command.
+// Returns the output and the file name.
+// The file name is a UUID v4 string with the .mp4 extension.
+// If the content should be spoilered, the file name is prefixed with "SPOILER_".
+// The file is stored in the current working directory.
 pub async fn download(content: &str, should_be_spoiled: bool) -> (String, String) {
     let mut file_name = Uuid::new_v4().to_string() + ".mp4";
     if should_be_spoiled {

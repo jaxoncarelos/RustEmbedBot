@@ -57,12 +57,12 @@ impl EventHandler for Handler {
                 };
             }
             _ => {
-                // the file is stored @ outPath
-                let (output, outPath) = content_utils::download(content, should_be_spoiled).await;
+                // the file is stored @ out_path
+                let (output, out_path) = content_utils::download(content, should_be_spoiled).await;
 
                 println!("Output: {}", output);
-                println!("OutPath: {}", outPath);
-                let files = CreateAttachment::path(&outPath).await.unwrap();
+                println!("OutPath: {}", out_path);
+                let files = CreateAttachment::path(&out_path).await.unwrap();
                 let allowed_mentions = CreateAllowedMentions::default().replied_user(false);
                 let message = CreateMessage::new()
                     .reference_message(&msg)
@@ -70,7 +70,7 @@ impl EventHandler for Handler {
                     .allowed_mentions(allowed_mentions);
                 let _ = msg.channel_id.send_message(&ctx.http, message).await;
 
-                if let Err(why) = std::fs::remove_file(&outPath) {
+                if let Err(why) = std::fs::remove_file(&out_path) {
                     println!("Error deleting file: {:?}", why);
                 }
             }
