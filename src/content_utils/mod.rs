@@ -30,6 +30,9 @@ pub fn get_regex(content: String) -> String {
     let set = RegexSet::new(REGEX_MAP).unwrap();
     let matches = set.matches(&content);
 
+    if matches.iter().count() == 0 {
+        return "".to_string();
+    }
     return REGEX_MAP[matches.iter().next().unwrap()].to_string();
 }
 pub fn is_valid(content: &str) -> Content {
