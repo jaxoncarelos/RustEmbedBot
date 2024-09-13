@@ -1,4 +1,4 @@
-use std::{collections::HashMap, process::Command};
+use std::process::Command;
 
 use regex::RegexSet;
 use uuid::Uuid;
@@ -22,12 +22,22 @@ static REGEX_MAP: [&str; 4] = [
     r"https?:\/\/(?:www\.)?instagram\.com\/[a-zA-Z0-9_]+\/?(?:\?igshid=[a-zA-Z0-9_]+)?",
     r"https?:\/\/(?:www\.)?facebook\.com\/(reel)\/[a-zA-Z0-9_]+\/?",
 ];
+
+pub fn get_regex(content: String) -> String {
+    if regex::Regex::new(TWITTER_REGEX).unwrap().is_match(&content) {
+        return TWITTER_REGEX.to_string();
+    }
+    let set = RegexSet::new(REGEX_MAP).unwrap();
+    let matches = set.matches(&content);
+
+    return REGEX_MAP[matches.iter().next().unwrap()].to_string();
+}
 pub fn is_valid(content: &str) -> Content {
     if regex::Regex::new(TWITTER_REGEX).unwrap().is_match(content) {
         return Content::Twitter;
     }
 
-    let set = RegexSet::new(&REGEX_MAP).unwrap();
+    let set = RegexSet::new(REGEX_MAP).unwrap();
     let content = content.trim();
     let matches = set.matches(content);
     if matches.iter().count() > 0 {
@@ -61,7 +71,7 @@ pub async fn download(content: &str, should_be_spoiled: bool) -> (String, String
         .arg(&file_name)
         .arg(content);
     let output = command.output().expect("Failed to execute command");
-    if output.stderr.len() > 0 {
+    if !output.stderr.is_empty() {
         return (
             String::from_utf8(output.stderr).unwrap(),
             "stderr".to_string(),

@@ -26,7 +26,7 @@ impl EventHandler for Handler {
         let should_be_spoiled = content_utils::should_be_spoilered(content);
         let is_valid = content_utils::is_valid(content);
 
-        let check_url = regex::Regex::new(&content_utils::get_regex(&is_valid)).unwrap();
+        let check_url = regex::Regex::new(&content_utils::get_regex(content.to_string())).unwrap();
         let content = check_url.find(content).unwrap().as_str();
         if is_valid == content_utils::Content::None {
             return;
