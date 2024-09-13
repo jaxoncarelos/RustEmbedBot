@@ -6,7 +6,7 @@ pub fn should_be_spoilered(content: &str) -> bool {
     let re = regex::Regex::new(pattern).unwrap();
     re.is_match(content)
 }
-#[derive(PartialEq, Hash, Eq, Debug)]
+#[derive(PartialEq, Hash, Eq, Debug, Clone)]
 pub enum Content {
     Twitter,
     Tiktok,
@@ -16,18 +16,6 @@ pub enum Content {
     None,
 }
 
-impl Clone for Content {
-    fn clone(&self) -> Content {
-        match self {
-            Content::Twitter => Content::Twitter,
-            Content::Tiktok => Content::Tiktok,
-            Content::Reddit => Content::Reddit,
-            Content::Instagram => Content::Instagram,
-            Content::Facebook => Content::Facebook,
-            Content::None => Content::None,
-        }
-    }
-}
 pub fn get_regex(content: &Content) -> String {
     let regex_map: HashMap<Content, String> = HashMap::from([
         (
