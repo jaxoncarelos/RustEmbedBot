@@ -1,14 +1,12 @@
 use std::{collections::HashMap, process::Command};
 
+use regex::RegexSet;
 use uuid::Uuid;
 
 #[derive(PartialEq, Hash, Eq, Debug, Clone)]
 pub enum Content {
     Twitter,
-    Tiktok,
-    Reddit,
-    Instagram,
-    Facebook,
+    Some,
     None,
 }
 pub fn should_be_spoilered(content: &str) -> bool {
@@ -16,69 +14,26 @@ pub fn should_be_spoilered(content: &str) -> bool {
     let re = regex::Regex::new(pattern).unwrap();
     re.is_match(content)
 }
-
-pub fn get_regex(content: &Content) -> String {
-    let regex_map: HashMap<Content, String> = HashMap::from([
-        (
-            Content::Twitter,
-            r"https:\/\/(?:www\.)?(twitter|x)\.com\/.+\/status(?:es)?\/(\d+)(?:.+ )?".to_string(),
-        ),
-        (
-            Content::Tiktok,
-            r"https?://(?:www\.|vm\.|vt\.)?tiktok\.com/.+(?: )?".to_string(),
-        ),
-        (
-            Content::Reddit,
-            r"https?://(?:(?:old\.|www\.)?reddit\.com|v\.redd\.it)/.+(?: )?".to_string(),
-        ),
-        (
-            Content::Instagram,
-            r"https?:\/\/(?:www\.)?instagram\.com\/[a-zA-Z0-9_]+\/?(?:\?igshid=[a-zA-Z0-9_]+)?"
-                .to_string(),
-        ),
-        (
-            Content::Facebook,
-            r"https?:\/\/(?:www\.)?facebook\.com\/(reel)\/[a-zA-Z0-9_]+\/?".to_string(),
-        ),
-    ]);
-    let winner = regex_map.iter().find(|(key, _)| key == &content);
-    match winner {
-        Some((_, value)) => value.to_string(),
-        None => "".to_string(),
-    }
-}
+static TWITTER_REGEX: &str =
+    r"https:\/\/(?:www\.)?(twitter|x)\.com\/.+\/status(?:es)?\/(\d+)(?:.+ )?";
+static REGEX_MAP: [&str; 4] = [
+    r"https?://(?:www\.|vm\.|vt\.)?tiktok\.com/.+(?: )?",
+    r"https?://(?:(?:old\.|www\.)?reddit\.com|v\.redd\.it)/.+(?: )?",
+    r"https?:\/\/(?:www\.)?instagram\.com\/[a-zA-Z0-9_]+\/?(?:\?igshid=[a-zA-Z0-9_]+)?",
+    r"https?:\/\/(?:www\.)?facebook\.com\/(reel)\/[a-zA-Z0-9_]+\/?",
+];
 pub fn is_valid(content: &str) -> Content {
-    let regex_map: HashMap<Content, String> = HashMap::from([
-        (
-            Content::Twitter,
-            r"https:\/\/(?:www\.)?(twitter|x)\.com\/.+\/status(?:es)?\/(\d+)(?:.+ )?".to_string(),
-        ),
-        (
-            Content::Tiktok,
-            r"https?://(?:www\.|vm\.|vt\.)?tiktok\.com/.+(?: )?".to_string(),
-        ),
-        (
-            Content::Reddit,
-            r"https?://(?:(?:old\.|www\.)?reddit\.com|v\.redd\.it)/.+(?: )?".to_string(),
-        ),
-        (
-            Content::Instagram,
-            r"https?:\/\/(?:www\.)?instagram\.com\/[a-zA-Z0-9_]+\/?(?:\?igshid=[a-zA-Z0-9_]+)?"
-                .to_string(),
-        ),
-        (
-            Content::Facebook,
-            r"https?:\/\/(?:www\.)?facebook\.com\/(reel)\/[a-zA-Z0-9_]+\/?".to_string(),
-        ),
-    ]);
-    let winner = regex_map.iter().find(|(_, value)| {
-        let re = regex::Regex::new(value).unwrap();
-        re.is_match(content)
-    });
-    match winner {
-        Some((key, _)) => key.clone(),
-        None => Content::None,
+    if regex::Regex::new(TWITTER_REGEX).unwrap().is_match(content) {
+        return Content::Twitter;
     }
+
+    let set = RegexSet::new(&REGEX_MAP).unwrap();
+    let content = content.trim();
+    let matches = set.matches(content);
+    if matches.iter().count() > 0 {
+        return Content::Some;
+    }
+    Content::None
 }
 // Downloads the content from the URL using predefined yt-dlp command.
 // Returns the output and the file name.
