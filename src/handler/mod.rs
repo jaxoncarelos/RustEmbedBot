@@ -1,7 +1,10 @@
 use std::process::Command;
 
 use serenity::{
-    all::{Context, CreateAllowedMentions, CreateAttachment, CreateMessage, EventHandler, Message},
+    all::{
+        Context, CreateAllowedMentions, CreateAttachment, CreateMessage, EditMessage, EventHandler,
+        Message,
+    },
     async_trait,
 };
 
@@ -11,7 +14,7 @@ pub struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
-    async fn message(&self, ctx: Context, msg: Message) {
+    async fn message(&self, ctx: Context, mut msg: Message) {
         if msg.author.id == ctx.cache.current_user().id {
             return;
         }
@@ -45,7 +48,7 @@ impl EventHandler for Handler {
                 }
                 if let Err(why) = &msg
                     .reply(
-                        ctx,
+                        &ctx,
                         format!(
                             "[Twitter Video]({})",
                             String::from_utf8(output.stdout).unwrap()
@@ -55,18 +58,25 @@ impl EventHandler for Handler {
                 {
                     println!("Error sending message: {:?}", why);
                 };
+                if let Err(why) = msg
+                    .edit(&ctx, EditMessage::new().suppress_embeds(true))
+                    .await
+                {
+                    println!("Error editing message: {:?}", why);
+                }
             }
             _ => {
                 // the file is stored @ out_path
-                let (output, out_path) = content_utils::download(content, should_be_spoiled).await;
-                if out_path == "stderr" {
-                    println!("Failed downloading content: {}", output);
+                let vals = content_utils::download(content, should_be_spoiled).await;
+                if let Err(why) = vals {
+                    println!("Error downloading content: {:?}", why);
                     msg.channel_id
                         .create_reaction(&ctx, msg, '❌')
                         .await
                         .unwrap();
                     return;
                 }
+                let (output, out_path) = vals.unwrap();
                 println!("Output: {}", output);
                 println!("OutPath: {}", out_path);
                 let files = CreateAttachment::path(&out_path).await.unwrap();
@@ -76,7 +86,12 @@ impl EventHandler for Handler {
                     .files(vec![files])
                     .allowed_mentions(allowed_mentions);
                 let _ = msg.channel_id.send_message(&ctx.http, message).await;
-
+                if let Err(why) = msg
+                    .edit(&ctx, EditMessage::new().suppress_embeds(true))
+                    .await
+                {
+                    println!("Error editing message: {:?}", why);
+                }
                 if let Err(why) = std::fs::remove_file(&out_path) {
                     println!("Error deleting file: {:?}", why);
                 }
