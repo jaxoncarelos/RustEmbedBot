@@ -74,9 +74,13 @@ pub async fn download(content: &str, should_be_spoiled: bool) -> Result<(String,
         .arg("-o")
         .arg(&file_name)
         .arg(content);
-    let output = command.output().await;
-    match output {
-        Ok(output) => Ok((String::from_utf8(output.stdout).unwrap(), file_name)),
-        Err(e) => Err(e),
+    let output = command.output().await?;
+    if output.status.success() {
+        Ok((String::from_utf8(output.stdout).unwrap(), file_name))
+    } else {
+        Err(Error::new(
+            std::io::ErrorKind::Other,
+            String::from_utf8_lossy(&output.stderr).into_owned(),
+        ))
     }
 }
