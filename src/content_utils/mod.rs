@@ -17,8 +17,8 @@ pub fn should_be_spoilered(content: &str) -> bool {
 }
 static TWITTER_REGEX: &str =
     r"https:\/\/(?:www\.)?(twitter|x)\.com\/.+\/status(?:es)?\/(\d+)(?:.+ )?";
-static REGEX_MAP: [&str; 3] = [
-    // r"https?://(?:www\.|vm\.|vt\.)?tiktok\.com/.+(?: )?",
+static REGEX_MAP: [&str; 4] = [
+    r"https?://(?:www\.|vm\.|vt\.)tiktok\.com/.+(?: )?",
     r"https?://(?:(?:old\.|www\.)?reddit\.com|v\.redd\.it)/.+(?: )?",
     r"https?:\/\/(?:www\.)?instagram\.com\/[a-zA-Z0-9_]+\/?(?:\?igshid=[a-zA-Z0-9_]+)?",
     r"https?:\/\/(?:www\.)?facebook\.com\/(reel)\/[a-zA-Z0-9_]+\/?",
