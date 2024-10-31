@@ -27,7 +27,6 @@ async fn main() {
 
     tokio::spawn(async move {
         let interval = Duration::from_secs(60 * 60 * 8);
-        let mut next_time = Instant::now() + interval;
         loop {
             eprintln!("Updating yt-dlp");
             tokio::process::Command::new("yt-dlp")
@@ -35,8 +34,7 @@ async fn main() {
                 .output()
                 .await
                 .expect("Failed to update yt-dlp");
-            sleep(next_time - Instant::now()).await;
-            next_time += interval;
+            sleep(interval).await;
         }
     });
     if let Err(why) = client.start().await {
