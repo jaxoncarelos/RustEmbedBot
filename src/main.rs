@@ -24,6 +24,7 @@ async fn main() {
         .event_handler(Handler)
         .await
         .expect("Error creating client");
+
     tokio::spawn(async move {
         let interval = Duration::from_secs(60 * 60 * 8);
         let mut next_time = Instant::now() + interval;

@@ -31,9 +31,10 @@ pub fn get_regex(content: String) -> String {
     let set = RegexSet::new(REGEX_MAP).unwrap();
     let matches = set.matches(&content);
 
-    if matches.iter().count() == 0 {
+    if matches.len() == 0 {
         return "".to_string();
     }
+
     return REGEX_MAP[matches.iter().next().unwrap()].to_string();
 }
 pub fn is_valid(content: &str) -> Content {
@@ -44,7 +45,7 @@ pub fn is_valid(content: &str) -> Content {
     let set = RegexSet::new(REGEX_MAP).unwrap();
     let content = content.trim();
     let matches = set.matches(content);
-    if matches.iter().count() > 0 {
+    if matches.len() > 0 {
         return Content::Some;
     }
     Content::None
@@ -55,10 +56,11 @@ pub fn is_valid(content: &str) -> Content {
 // If the content should be spoilered, the file name is prefixed with "SPOILER_".
 // The file is stored in the current working directory.
 pub async fn download(content: &str, should_be_spoiled: bool) -> Result<(String, PathBuf), Error> {
-    let mut file_name = Uuid::new_v4().to_string() + ".mp4";
-    if should_be_spoiled {
-        file_name = "SPOILER_".to_string() + &file_name;
-    }
+    let file_name = format!(
+        "{}{}.mp4",
+        if should_be_spoiled { "SPOILER_" } else { "" },
+        Uuid::new_v4()
+    );
     let mut binding = Command::new("yt-dlp");
     let command = binding
         .arg("-f")
@@ -75,6 +77,7 @@ pub async fn download(content: &str, should_be_spoiled: bool) -> Result<(String,
         .arg(&file_name)
         .arg(content);
     let output = command.output().await?;
+
     if output.status.success() {
         Ok((
             String::from_utf8(output.stdout).unwrap(),
