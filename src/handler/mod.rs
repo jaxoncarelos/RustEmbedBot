@@ -78,7 +78,6 @@ impl EventHandler for Handler {
                 }
                 let (output, out_path) = vals.unwrap();
                 println!("Output: {}", output);
-                println!("OutPath: {}", out_path);
                 let files = CreateAttachment::path(&out_path).await.unwrap();
                 let allowed_mentions = CreateAllowedMentions::default().replied_user(false);
                 let message = CreateMessage::new()

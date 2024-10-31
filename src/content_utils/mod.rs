@@ -1,4 +1,4 @@
-use std::io::Error;
+use std::{io::Error, path::PathBuf};
 
 use regex::RegexSet;
 use tokio::process::Command;
@@ -54,7 +54,7 @@ pub fn is_valid(content: &str) -> Content {
 // The file name is a UUID v4 string with the .mp4 extension.
 // If the content should be spoilered, the file name is prefixed with "SPOILER_".
 // The file is stored in the current working directory.
-pub async fn download(content: &str, should_be_spoiled: bool) -> Result<(String, String), Error> {
+pub async fn download(content: &str, should_be_spoiled: bool) -> Result<(String, PathBuf), Error> {
     let mut file_name = Uuid::new_v4().to_string() + ".mp4";
     if should_be_spoiled {
         file_name = "SPOILER_".to_string() + &file_name;
@@ -76,7 +76,10 @@ pub async fn download(content: &str, should_be_spoiled: bool) -> Result<(String,
         .arg(content);
     let output = command.output().await?;
     if output.status.success() {
-        Ok((String::from_utf8(output.stdout).unwrap(), file_name))
+        Ok((
+            String::from_utf8(output.stdout).unwrap(),
+            PathBuf::from(file_name),
+        ))
     } else {
         Err(Error::new(
             std::io::ErrorKind::Other,
