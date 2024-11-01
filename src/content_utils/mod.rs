@@ -31,7 +31,7 @@ pub fn get_regex(content: String) -> String {
     let set = RegexSet::new(REGEX_MAP).unwrap();
     let matches = set.matches(&content);
 
-    if matches.len() == 0 {
+    if matches.iter().count() == 0 {
         return "".to_string();
     }
 
@@ -45,7 +45,7 @@ pub fn is_valid(content: &str) -> Content {
     let set = RegexSet::new(REGEX_MAP).unwrap();
     let content = content.trim();
     let matches = set.matches(content);
-    if matches.len() > 0 {
+    if matches.iter().count() > 0 {
         return Content::Some;
     }
     Content::None
