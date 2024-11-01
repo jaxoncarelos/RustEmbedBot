@@ -1,4 +1,4 @@
-use std::process::Command;
+use tokio::process::Command;
 
 use serenity::{
     all::{
@@ -21,7 +21,7 @@ impl EventHandler for Handler {
 
         let content = &msg.content;
 
-        if content.starts_with("!!") {
+        if content.starts_with("!!") || content.starts_with(".dl") {
             println!("Skipping embed on {}", content);
             return;
         }
@@ -42,7 +42,7 @@ impl EventHandler for Handler {
             content_utils::Content::Twitter => {
                 let mut cmd = Command::new("yt-dlp");
                 let command = cmd.arg("-g").arg("-f").arg("best[ext=mp4]").arg(content);
-                let output = command.output().expect("Failed to execute command");
+                let output = command.output().await.expect("Failed to execute command");
                 if output.stdout.is_empty() {
                     return;
                 }
@@ -51,7 +51,7 @@ impl EventHandler for Handler {
                         &ctx,
                         format!(
                             "[Twitter Video]({})",
-                            String::from_utf8(output.stdout).unwrap()
+                            String::from_utf8(output.stdout).unwrap().trim()
                         ),
                     )
                     .await
