@@ -51,7 +51,12 @@ impl EventHandler for Handler {
                         &ctx,
                         format!(
                             "[Twitter Video]({})",
-                            String::from_utf8(output.stdout).unwrap().trim()
+                            String::from_utf8(output.stdout)
+                                .unwrap()
+                                .trim()
+                                .split("\n")
+                                .next()
+                                .unwrap()
                         ),
                     )
                     .await
