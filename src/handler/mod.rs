@@ -27,8 +27,7 @@ impl EventHandler for Handler {
         }
         if content.starts_with(".latex") {
             let latex = content.split(".latex").collect::<Vec<&str>>()[1].trim();
-            // force the latex to be white
-            let latex = format!("\\pagecolor{{white}} {}", latex);
+            let latex = "\\color{Red}{".to_string() + latex + "}";
             let url = format!(
                 "https://latex.codecogs.com/png.latex?\\dpi{{300}}&space;{}",
                 latex
