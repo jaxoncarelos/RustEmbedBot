@@ -20,14 +20,17 @@ impl EventHandler for Handler {
         }
 
         let content = &msg.content;
-    
+
         if content.starts_with("!!") || content.starts_with(".dl") {
             println!("Skipping embed on {}", content);
             return;
         }
         if content.starts_with(".latex") {
             let latex = content.split(".latex").collect::<Vec<&str>>()[1].trim();
-            let url = format!("https://latex.codecogs.com/png.latex?\\dpi{{300}}&space;{}", latex);
+            let url = format!(
+                "https://latex.codecogs.com/png.latex?\\dpi{{300}}&space;{}",
+                latex
+            );
             let message = CreateMessage::new().content(url);
             let _ = msg.channel_id.send_message(&ctx.http, message).await;
             return;
