@@ -36,7 +36,7 @@ pub fn get_regex(content: String) -> String {
     }
     match matches.iter().next() {
         None => "".to_string(),
-        Some(x) => REGEX_MAP[*x].to_string(),
+        Some(x) => REGEX_MAP[x].to_string(),
     }
 }
 pub fn is_valid(content: &str) -> Content {
