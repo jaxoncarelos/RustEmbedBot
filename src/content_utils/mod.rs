@@ -34,8 +34,10 @@ pub fn get_regex(content: String) -> String {
     if matches.len() == 0 {
         return "".to_string();
     }
-
-    return REGEX_MAP[matches.iter().next().unwrap()].to_string();
+    match matches.iter().next() {
+        None => "".to_string(),
+        Some(x) => REGEX_MAP[*x].to_string(),
+    }
 }
 pub fn is_valid(content: &str) -> Content {
     if regex::Regex::new(TWITTER_REGEX).unwrap().is_match(content) {
