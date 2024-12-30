@@ -1,5 +1,3 @@
-use tokio::process::Command;
-
 use serenity::{
     all::{
         Context, CreateAllowedMentions, CreateAttachment, CreateMessage, EditMessage, EventHandler,
@@ -7,8 +5,8 @@ use serenity::{
     },
     async_trait,
 };
-
-use crate::content_utils;
+use tokio::process::Command;
+use url::form_urlencoded;
 
 pub struct Handler;
 
@@ -27,8 +25,9 @@ impl EventHandler for Handler {
         }
         if content.starts_with(".latex") {
             let latex = content.split(".latex").collect::<Vec<&str>>()[1].trim();
-            let latex = "\\color{Red}{".to_string() + latex + "}";
-            let latex = latex.replace(" ", "%20");
+            let latex = "\\color{Red}{".to_string() + &latex + "}";
+            let latex = &latex.replace(" ", "%20");
+            let latex = url::form_urlencoded::byte_serialize(&latex.as_bytes()).collect::<String>();
             let url = format!(
                 "https://latex.codecogs.com/png.latex?\\dpi{{300}}&space;{}",
                 latex
